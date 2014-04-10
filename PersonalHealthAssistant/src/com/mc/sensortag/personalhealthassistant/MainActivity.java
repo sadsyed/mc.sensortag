@@ -28,6 +28,9 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -116,6 +119,42 @@ public class MainActivity extends Activity {
 		mFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
 
 		onScanViewReady();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu items for use in the action bar
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+		case android.R.id.home:
+			onBackPressed();
+			return true;
+		case R.id.scan_menu:
+			onScan();
+			break;
+		case R.id.opt_about:
+			//onAbout();
+			break;
+		case R.id.opt_exit:
+			finish();
+			break;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+		return true;
+	}
+	
+	public void onScan() {
+		// Scan for devices
+		mScanning = true;
+		startScan();
 	}
 
 	public void onScanViewReady() {
@@ -209,11 +248,15 @@ public class MainActivity extends Activity {
 				int status = intent.getIntExtra(
 						BluetoothLeService.EXTRA_STATUS,
 						BluetoothGatt.GATT_FAILURE);
-				stopDeviceActivity();
+				//stopDeviceActivity();
+				stopDeviceService();
 				if (status == BluetoothGatt.GATT_SUCCESS) {
 					// setBusy(false);
 					scanActivity.setStatus(mBluetoothDevice.getName()
 							+ " disconnected", STATUS_DURATION);
+					Toast.makeText(MainActivity.this, 
+							mBluetoothDevice.getName() + " disconnected",
+							Toast.LENGTH_LONG).show();
 				} else {
 					setError("Disconnect failed. Status: " + status);
 				}
@@ -306,20 +349,30 @@ public class MainActivity extends Activity {
 	}
 
 	private void startDeviceActivity() {
-		/*Log.i(TAG, "**Starting Device Activity**");
-		mDeviceIntent = new Intent(this, DeviceActivity.class);
-		mDeviceIntent.putExtra(DeviceActivity.EXTRA_DEVICE, mBluetoothDevice);
-		startActivityForResult(mDeviceIntent, REQ_DEVICE_ACT);*/
 		
+		  /*Log.i(TAG, "**Starting Device Activity**"); mDeviceIntent = new
+		  Intent(this, DeviceActivity.class);
+		  mDeviceIntent.putExtra(DeviceActivity.EXTRA_DEVICE,
+		  mBluetoothDevice); startActivityForResult(mDeviceIntent,
+		  REQ_DEVICE_ACT);*/
+
 		Intent i = new Intent(MainActivity.this, DeviceService.class);
 		i.putExtra(DeviceActivity.EXTRA_DEVICE, mBluetoothDevice);
 		MainActivity.this.startService(i);
-		
-		Toast.makeText(MainActivity.this, "Starting SensorTag tracking in the background" , Toast.LENGTH_LONG).show();
+
+		Toast.makeText(MainActivity.this,
+				"Starting SensorTag tracking in the background",
+				Toast.LENGTH_LONG).show();
 	}
 
-	private void stopDeviceActivity() {
+	/*private void stopDeviceActivity() {
 		finishActivity(REQ_DEVICE_ACT);
+	}*/
+	
+	private void stopDeviceService(){
+		Intent i = new Intent(MainActivity.this, DeviceService.class);
+		//i.putExtra(DeviceActivity.EXTRA_DEVICE, mBluetoothDevice);
+		MainActivity.this.stopService(i);
 	}
 
 	private boolean scanLeDevice(boolean enable) {

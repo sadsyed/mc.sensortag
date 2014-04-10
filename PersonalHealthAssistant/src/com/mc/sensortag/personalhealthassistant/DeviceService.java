@@ -35,45 +35,58 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class DeviceService extends Service{
+public class DeviceService extends Service {
 
 	// Log
-		private static String TAG = "DeviceActivity";
-		public static FileOutputStream accelerometerOutputStream;
+	private static String TAG = "DeviceService";
+	public static FileOutputStream accelerometerOutputStream;
 
-		// Activity
-		public static final String EXTRA_DEVICE = "EXTRA_DEVICE";
+	// Activity
+	public static final String EXTRA_DEVICE = "EXTRA_DEVICE";
 
-		// BLE
-		private BluetoothLeService mBtLeService = null;
-		private BluetoothDevice mBluetoothDevice = null;
-		private BluetoothGatt mBtGatt = null;
-		private List<BluetoothGattService> mServiceList = null;
-		private static final int GATT_TIMEOUT = 100; // milliseconds
-		private boolean mServicesRdy = false;
-		private boolean mIsReceiving = false;
+	// BLE
+	private BluetoothLeService mBtLeService = null;
+	private BluetoothDevice mBluetoothDevice = null;
+	private BluetoothGatt mBtGatt = null;
+	private List<BluetoothGattService> mServiceList = null;
+	private static final int GATT_TIMEOUT = 100; // milliseconds
+	private boolean mServicesRdy = false;
+	private boolean mIsReceiving = false;
 
-		// SensorTag
-		private List<Sensor> mEnabledSensors = new ArrayList<Sensor>();
+	// SensorTag
+	private List<Sensor> mEnabledSensors = new ArrayList<Sensor>();
 
-		// House-keeping
-		private DecimalFormat decimal = new DecimalFormat("+0.00;-0.00");
+	// House-keeping
+	private DecimalFormat decimal = new DecimalFormat("+0.00;-0.00");
 
-		private TextView accelerometerReadingView;
+	private TextView accelerometerReadingView;
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId){
+	public boolean onUnbind(Intent intent) {
+		return super.onUnbind(intent);
+	}
+
+	@Override
+	public void onDestroy() {
+		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+		super.onDestroy();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.e("BACKGROUND", "initializing background service");
-		
-		//Intent mIntent = getIntent();
+
+		// Intent mIntent = getIntent();
 
 		// UI widgets
-		//accelerometerReadingView = (TextView) findViewById(R.id.accelerometerReadingView);
+		// accelerometerReadingView = (TextView)
+		// findViewById(R.id.accelerometerReadingView);
 
 		// BLE
 		mBtLeService = BluetoothLeService.getInstance();
@@ -84,9 +97,9 @@ public class DeviceService extends Service{
 		Resources res = getResources();
 		XmlResourceParser xpp = res.getXml(R.xml.gatt_uuid);
 		new GattInfo(xpp);
-		
-	    // Initialize Accelerometer Logs
-	    createAccelerometerLogOnDevice();
+
+		// Initialize Accelerometer Logs
+		createAccelerometerLogOnDevice();
 
 		// Initialize sensor list
 		updateSensorList();
@@ -94,7 +107,7 @@ public class DeviceService extends Service{
 		Log.d(TAG, "Gatt view ready");
 
 		// Set title bar to device name
-		//setTitle(mBluetoothDevice.getName());
+		// setTitle(mBluetoothDevice.getName());
 
 		// Create GATT object
 		mBtGatt = BluetoothLeService.getBtGatt();
@@ -106,40 +119,39 @@ public class DeviceService extends Service{
 			else
 				displayServices();
 		}
-		
+
 		if (!mIsReceiving) {
 			registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 			mIsReceiving = true;
 		}
-		
+
 		return START_NOT_STICKY;
 	}
-	
-	@Override
-	public boolean onUnbind(Intent intent){
-		return super.onUnbind(intent);
-	}
-	
+
 	private void createAccelerometerLogOnDevice() {
-	  	Log.e("AccelerometerLog", "initializing BLE SERVICE");
-	  	
-	  	File deviceRoot = Environment.getExternalStorageDirectory();
-	  	Log.e("AccelerometeLog", deviceRoot.toString());
-	  
-	  	if(deviceRoot.canWrite()){
-	  		File accelerometerLog = new File(deviceRoot, "/baccelerometerLogFile.txt");
-	  		try {
-	  			
-					accelerometerOutputStream = new FileOutputStream(accelerometerLog);
-					
-					Date timestamp = new Date();
-					accelerometerOutputStream.write(( String.valueOf(timestamp) + ": ***** Accelerometer Log *****").getBytes());
-					
-				} catch (IOException e) {
-					e.printStackTrace();
+		Log.e("AccelerometerLog", "initializing BLE SERVICE");
+
+		File deviceRoot = Environment.getExternalStorageDirectory();
+		Log.e("AccelerometeLog", deviceRoot.toString());
+
+		if (deviceRoot.canWrite()) {
+			File accelerometerLog = new File(deviceRoot,
+					"/accelerometerLogFile.txt");
+			try {
+
+				accelerometerOutputStream = new FileOutputStream(
+						accelerometerLog);
+
+				Date timestamp = new Date();
+				accelerometerOutputStream
+						.write((String.valueOf(timestamp) + ": ***** Accelerometer Log *****")
+								.getBytes());
+
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-	  	}
-  }
+		}
+	}
 
 	//
 	// Application implementation
@@ -231,15 +243,12 @@ public class DeviceService extends Service{
 		}
 	}
 
-	/*@Override
-	protected void onResume() {
-		Log.d(TAG, "onResume");
-		super.onResume();
-		if (!mIsReceiving) {
-			registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-			mIsReceiving = true;
-		}
-	}*/
+	/*
+	 * @Override protected void onResume() { Log.d(TAG, "onResume");
+	 * super.onResume(); if (!mIsReceiving) {
+	 * registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+	 * mIsReceiving = true; } }
+	 */
 
 	private static IntentFilter makeGattUpdateIntentFilter() {
 		final IntentFilter fi = new IntentFilter();
@@ -274,7 +283,7 @@ public class DeviceService extends Service{
 						.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				String uuidStr = intent
 						.getStringExtra(BluetoothLeService.EXTRA_UUID);
-				//logAccelerometerReading("\n onCharacteristicChanged--------");
+				// logAccelerometerReading("\n onCharacteristicChanged--------");
 				onCharacteristicChanged(uuidStr, value);
 			} else if (BluetoothLeService.ACTION_DATA_WRITE.equals(action)) {
 				// Data written
@@ -320,8 +329,9 @@ public class DeviceService extends Service{
 			log = "x=" + decimal.format(v.x) + "\n" + "y="
 					+ decimal.format(v.y) + "\n" + "z=" + decimal.format(v.z);
 			Date timestamp = new Date();
-			logAccelerometerReading("\n" + String.valueOf(timestamp) + ": " + log);
-			//accelerometerReadingView.setText(msg);
+			logAccelerometerReading("\n" + String.valueOf(timestamp) + ": \n"
+					+ log);
+			// accelerometerReadingView.setText(msg);
 		}
 	}
 

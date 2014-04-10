@@ -15,5 +15,10 @@
     <string name="title_activity_device">DeviceActivity</string>
     <string name="accelerometer_reading_label">Accelerometer Reading:</string>
     <string name="accelerometer_reading"></string>
+    
+    <string name="scan_menu">Scan</string>
+    <string name="about">About</string>
+    <string name="exit">Exit</string>
+    
 
 </resources>
