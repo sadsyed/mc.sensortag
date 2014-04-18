@@ -31,6 +31,7 @@ import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -114,17 +115,18 @@ public class DeviceService extends Service {
 
 		// Start service discovery
 		if (!mServicesRdy && mBtGatt != null) {
-			if (mBtLeService.getNumServices() == 0)
+			if (mBtLeService.getNumServices() == 0){
 				discoverServices();
+			}
 			else
 				displayServices();
 		}
-
+		
 		if (!mIsReceiving) {
 			registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 			mIsReceiving = true;
 		}
-
+		
 		return START_NOT_STICKY;
 	}
 
@@ -161,8 +163,10 @@ public class DeviceService extends Service {
 
 		for (int i = 0; i < Sensor.SENSOR_LIST.length; i++) {
 			Sensor sensor = Sensor.SENSOR_LIST[i];
-			Log.i(TAG, sensor.name().toString());
-			mEnabledSensors.add(sensor);
+			if("ACCELEROMETER".equals(sensor.name().toString())){
+				Log.i(TAG, sensor.name().toString());
+				mEnabledSensors.add(sensor);
+			}
 		}
 	}
 
@@ -220,10 +224,8 @@ public class DeviceService extends Service {
 			}
 
 			BluetoothGattService serv = mBtGatt.getService(servUuid);
-			BluetoothGattCharacteristic charac = serv
-					.getCharacteristic(confUuid);
-			byte value = enable ? sensor.getEnableSensorCode()
-					: Sensor.DISABLE_SENSOR_CODE;
+			BluetoothGattCharacteristic charac = serv.getCharacteristic(confUuid);
+			byte value = enable ? sensor.getEnableSensorCode(): Sensor.DISABLE_SENSOR_CODE;
 			mBtLeService.writeCharacteristic(charac, value);
 			mBtLeService.waitIdle(GATT_TIMEOUT);
 		}
@@ -283,7 +285,7 @@ public class DeviceService extends Service {
 						.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				String uuidStr = intent
 						.getStringExtra(BluetoothLeService.EXTRA_UUID);
-				// logAccelerometerReading("\n onCharacteristicChanged--------");
+				logAccelerometerReading("\n");
 				onCharacteristicChanged(uuidStr, value);
 			} else if (BluetoothLeService.ACTION_DATA_WRITE.equals(action)) {
 				// Data written
@@ -329,7 +331,7 @@ public class DeviceService extends Service {
 			log = "x=" + decimal.format(v.x) + "\n" + "y="
 					+ decimal.format(v.y) + "\n" + "z=" + decimal.format(v.z);
 			Date timestamp = new Date();
-			logAccelerometerReading("\n" + String.valueOf(timestamp) + ": \n"
+			logAccelerometerReading(String.valueOf(timestamp) + ": \n"
 					+ log);
 			// accelerometerReadingView.setText(msg);
 		}

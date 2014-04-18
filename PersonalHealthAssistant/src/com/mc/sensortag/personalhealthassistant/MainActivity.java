@@ -15,6 +15,7 @@ import com.mc.sensortag.personalhealthassistant.R;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
+import android.app.TabActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -32,10 +33,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends TabActivity {
 	private static final String TAG = "MainActivity";
 
 	// Requests to other activities
@@ -85,6 +87,11 @@ public class MainActivity extends Activity {
 		scanActivity = new ScanActivity(MainActivity.this, view);
 
 		Log.i(TAG, "onCreate");
+		
+		Log.i(TAG, "Displaying Tabs");
+		TabHost tabhost = getTabHost();
+		tabhost.addTab(tabhost.newTabSpec("one").setIndicator("Dashboard").setContent(new Intent(this, DashboardActivity.class)));
+		tabhost.addTab(tabhost.newTabSpec("two").setIndicator("Recommendations").setContent(new Intent(this, RecommendationsActivity.class)));
 
 		// Use this check to determine whether BLE is supported on the device.
 		// Then
@@ -350,7 +357,7 @@ public class MainActivity extends Activity {
 
 	private void startDeviceActivity() {
 		
-		  /*Log.i(TAG, "**Starting Device Activity**"); mDeviceIntent = new
+		 /* Log.i(TAG, "**Starting Device Activity**"); mDeviceIntent = new
 		  Intent(this, DeviceActivity.class);
 		  mDeviceIntent.putExtra(DeviceActivity.EXTRA_DEVICE,
 		  mBluetoothDevice); startActivityForResult(mDeviceIntent,
@@ -481,9 +488,11 @@ public class MainActivity extends Activity {
 		String descr = "Device Name: " + device.getName() + "\n"
 				+ "Device Address: " + device.getAddress() + "\n"
 				+ "Device Rssi: " + rssi + " dBm";
+		
+		Log.i(TAG, descr);
 
-		TextView deviceInfoTextView = (TextView) findViewById(R.id.deviceInfo);
-		deviceInfoTextView.setText(descr);
+		//TextView deviceInfoTextView = (TextView) findViewById(R.id.deviceInfo);
+		//deviceInfoTextView.setText(descr);
 	}
 
 	public void onDeviceClick(int pos) {

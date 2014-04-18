@@ -39,6 +39,9 @@
             android:label="@string/title_activity_device" >
         </activity>
         
+        <activity android:name="com.mc.sensortag.personalhealthassistant.DashboardActivity"></activity>
+		<activity android:name="com.mc.sensortag.personalhealthassistant.RecommendationsActivity"></activity>     
+		   
         <service android:enabled="true" android:name=".DeviceService"/>
     </application>
 
